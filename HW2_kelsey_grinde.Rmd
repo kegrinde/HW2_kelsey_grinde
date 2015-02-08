@@ -6,7 +6,7 @@ output: html_document
 ---
 
 # Homework instructions:
-We will be usin4g the `GEOmetabd` package to find gene expression data. The goal of this homework is to practice writing single-line code to query using SQL and the `data.table` package.
+We will be using the `GEOmetabd` package to find gene expression data. The goal of this homework is to practice writing single-line code to query using SQL and the `data.table` package.
 
 # Setup
 
