@@ -1,4 +1,4 @@
-# HW2-kegrinde
+# HW2_kelsey_grinde
 BIOST 578A HW#2
 
 This is the second homework assignment for BIOST 578A. This homework is due Tuesday, February 10.
