@@ -1,0 +1,83 @@
+---
+title: "HW 2 - BIOST 578A"
+author: "Kelsey Grinde"
+date: "2/10/2015"
+output: html_document
+---
+
+# Homework instructions:
+We will be usin4g the `GEOmetabd` package to find gene expression data. The goal of this homework is to practice writing single-line code to query using SQL and the `data.table` package.
+
+# Setup
+
+First we need to load necessary packages.
+```{r}
+# load data.table package
+suppressMessages(library(data.table))
+
+# setup for use of Bioconductor
+suppressMessages(source('http://bioconductor.org/biocLite.R'))
+
+## install GEOmetadb and GEOquery if necessary
+# suppressMessages(biocLite(c('GEOmetadb','GEOquery')))
+
+# load the GEOmetadb package
+suppressMessages(library(GEOmetadb))
+
+# download entire database if not done so already
+if(!file.exists('GEOmetadb.sqlite')) getSQLiteFile()
+```
+
+Then we'll open a connection:
+```{r}
+# open connection
+con <- dbConnect(SQLite(),'GEOmetadb.sqlite')
+```
+
+# Question 1:
+#### Use the GEOmetabd package to find all HCV gene expression data using the Illumina platform submitted by an investigator at Yale. This should be done with a single query, showing the title, the GSE accession number, the GPL accession number and the manufacturer and the description of the platform used.
+
+My query, below, asks for the title (gse.title), GSE and GPL accession numbers (gse.gse and gpl.gpl), the manufacturer (gpl.manufacturer), and the description of the platform used (gpl.description). This information is pulled from GSE and GPL tables, where the gse_gpl table is used to join the two, and we only keep entries for HCV (Hepatitis C Virus) gene expression data where the Illumina platform was used and was submitted by an investigator at Yale. 
+
+```{r}
+res <- dbGetQuery(con, "SELECT gse.title, gse.gse, gpl.gpl, gpl.manufacturer, gpl.description
+                  FROM (gse JOIN gse_gpl ON gse.gse=gse_gpl.gse) j
+                  JOIN gpl on j.gpl=gpl.gpl 
+                  WHERE gpl.manufacturer like '%Illumina%'
+                  AND gse.contact like '%Yale%'
+                  AND (gse.title like '%epatit%' OR gse.title like '%HCV%'); ")
+
+```
+
+# Question 2:
+#### Reproduce your above query using the data.table package. Again, try to use a single line of code. [Hint: You first need to convert all db tables to data.table tables].
+
+Now my query asks for the same information as above, but using the `data.table` package instead of SQL queries.
+
+```{r}
+res2 <- data.table(dbGetQuery(con, 
+    "SELECT gpl, manufacturer, description from gpl WHERE manufacturer like '%Illumina%';"), key="gpl")[setkey(data.table(dbGetQuery(con, 
+    "SELECT * from gse_gpl;"), key=c("gse", "gpl"))[data.table(dbGetQuery(con, 
+    "SELECT title, gse from gse WHERE contact like '%Yale%' AND (title like '%epatit%' OR title like '%HCV%');"), key="gse"),nomatch=0],gpl),nomatch=0]
+setcolorder(res2,c('title','gse','gpl','manufacturer','description'))
+```
+
+Below I print out two tables containing the results (except for the very long description column) for my queries using `data.table` and SQL. They produce the same results.
+
+```{r}
+# Are they the same?
+suppressMessages(library(pander))
+
+# Data.Table Query Results
+pandoc.table(as.data.frame(res2)[1:4],style='grid')
+# SQL Query Results
+pandoc.table(res[1:4],style='grid')
+
+```
+
+
+# Cleanup
+Finally, we need to be sure to close the connection.
+```{r}
+dbDisconnect(con)
+```
