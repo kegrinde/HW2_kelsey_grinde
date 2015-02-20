@@ -40,7 +40,7 @@ con <- dbConnect(SQLite(),'GEOmetadb.sqlite')
 My query, below, asks for the title (gse.title), GSE and GPL accession numbers (gse.gse and gpl.gpl), the manufacturer (gpl.manufacturer), and the description of the platform used (gpl.description). This information is pulled from GSE and GPL tables, where the gse_gpl table is used to join the two, and we only keep entries for HCV (Hepatitis C Virus) gene expression data where the Illumina platform was used and was submitted by an investigator at Yale. 
 
 ```{r}
-res <- dbGetQuery(con, "SELECT gse.title, gse.gse, gpl.gpl, gpl.manufacturer, gpl.description
+res <- dbGetQuery(con, "SELECT gse.title, gse.gse, gpl.gpl, gpl.manufacturer, gpl.title
                   FROM (gse JOIN gse_gpl ON gse.gse=gse_gpl.gse) j
                   JOIN gpl on j.gpl=gpl.gpl 
                   WHERE gpl.manufacturer like '%Illumina%'
